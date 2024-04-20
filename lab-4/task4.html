@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task4</title>
+</head>
+<body>
+<div id="output"></div>
+<p id="eventLog"></p>
+<script>
+    class ImageLoadingStrategy {
+        loadImage(href) {}
+    }
+
+    class FileSystemImageStrategy extends ImageLoadingStrategy {
+        loadImage(href) {
+            console.log(`Loading image from file system: ${href}`);
+        }
+    }
+
+    class NetworkImageStrategy extends ImageLoadingStrategy {
+        loadImage(href) {
+            console.log(`Loading image from network: ${href}`);
+        }
+    }
+
+    class Image {
+        constructor(strategy) {
+            this.strategy = strategy;
+        }
+
+        loadImage(href) {
+            this.strategy.loadImage(href);
+        }
+    }
+
+    const fileSystemStrategy = new FileSystemImageStrategy();
+    const networkStrategy = new NetworkImageStrategy();
+
+    const image1 = new Image(fileSystemStrategy);
+    const image2 = new Image(networkStrategy);
+
+    image1.loadImage("/img/donechchyna.jpg");
+    image2.loadImage("https://kor.ill.in.ua/m/610x0/1572808.jpg?v=635584767723602702");
+
+    let div = document.createElement("div");
+    div.className = "container";
+
+    let img1 = document.createElement("img");
+    img1.src = "/img/donechchyna.jpg";
+    div.appendChild(img1);
+
+    let img2 = document.createElement("img");
+    img2.src = "https://kor.ill.in.ua/m/610x0/1572808.jpg?v=635584767723602702";
+    div.appendChild(img2);
+
+    document.getElementById("output").appendChild(div);
+</script>
+</body>
+</html>

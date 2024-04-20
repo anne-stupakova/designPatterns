@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task3</title>
+</head>
+<body>
+<div id="output"></div>
+<p id="eventLog"></p>
+<script>
+    class Observable {
+        constructor() {
+            this._observers = [];
+        }
+
+        addObserver(observer) {
+            this._observers.push(observer);
+        }
+
+        removeObserver(observer) {
+            this._observers = this._observers.filter(obs => obs !== observer);
+        }
+
+        notifyObservers(eventType) {
+            this._observers.forEach(observer => {
+                observer.notify(eventType);
+            });
+        }
+    }
+
+    class Observer {
+        constructor() {
+            this._events = {};
+        }
+
+        subscribe(element, eventType, listener) {
+            if (!this._events[eventType]) {
+                this._events[eventType] = [];
+            }
+            element.addEventListener(eventType, listener);
+            this._events[eventType].push({ element, listener });
+        }
+
+        unsubscribe(element, eventType, listener) {
+            if (this._events[eventType]) {
+                element.removeEventListener(eventType, listener);
+                this._events[eventType] = this._events[eventType].filter(evt => evt.element !== element || evt.listener !== listener);
+            }
+        }
+
+        notify(eventType) {
+            if (this._events[eventType]) {
+                this._events[eventType].forEach(evt => {
+                    evt.listener(evt.element);
+                });
+            }
+        }
+    }
+
+    class LightNode {
+        constructor() {}
+
+        getOuterHtml() {}
+        getInnerHtml() {}
+    }
+
+    class LightTextNode extends LightNode {
+        constructor(text) {
+            super();
+            this._text = text;
+        }
+
+        getOuterHtml() {
+            return this._text;
+        }
+
+        getInnerHtml() {
+            return this._text;
+        }
+    }
+
+    class LightElementNode extends LightNode {
+        constructor(tagName, displayType, closingType, cssClasses) {
+            super();
+            this._tagName = tagName;
+            this._displayType = displayType;
+            this._closingType = closingType;
+            this._cssClasses = cssClasses;
+            this._children = [];
+            this._events = {};
+        }
+
+        addChild(node) {
+            this._children.push(node);
+        }
+
+        getOuterHtml() {
+            let result = `<${this._tagName} class="${this._cssClasses.join(" ")}" display="${this._displayType}" closing="${this._closingType}">\n`;
+            this._children.forEach(child => {
+                result += `\t${child.getOuterHtml()}\n`;
+            });
+            if (this._closingType === "closing") {
+                result += `</${this._tagName}>`;
+            }
+            return result;
+        }
+
+        getInnerHtml() {
+            let result = "";
+            this._children.forEach(child => {
+                result += child.getInnerHtml();
+            });
+            return result;
+        }
+    }
+
+    let observer = new Observer();
+
+    let div = new LightElementNode("div", "block", "closing", ["container"]);
+    let ul = new LightElementNode("ul", "block", "closing", ["list"]);
+    let li1 = new LightElementNode("li", "inline", "self-closing", ["item"]);
+    let text1 = new LightTextNode("Lemon");
+    let li2 = new LightElementNode("li", "inline", "self-closing", ["item"]);
+    let text2 = new LightTextNode("Orange");
+
+    div.addChild(ul);
+    ul.addChild(li1);
+    li1.addChild(text1);
+    ul.addChild(li2);
+    li2.addChild(text2);
+
+    document.getElementById("output").innerHTML = div.getOuterHtml();
+
+    observer.subscribe(document.querySelector('.container'), "click", () => {
+        console.log("Clicked on div");
+    });
+
+    observer.subscribe(document.querySelector('.item:nth-child(1)'), "mouseover", () => {
+        console.log("Mouse over Lemon");
+    });
+
+    observer.subscribe(document.querySelector('.item:nth-child(2)'), "click", () => {
+        console.log("Clicked on Orange");
+    });
+
+</script>
+</body>
+</html>
