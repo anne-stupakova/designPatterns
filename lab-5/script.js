@@ -442,3 +442,65 @@ document.addEventListener("DOMContentLoaded", () => {
     contentContainer.innerHTML = root.outerHTML();
 });
 
+class Order {
+    constructor(productName, quantity) {
+        this.productName = productName;
+        this.quantity = quantity;
+    }
+
+    isProductAvailable() {
+        const product = products.find(product => product.name === this.productName);
+        return product && product.state instanceof AvailableState;
+    }
+
+    calculateTotalPrice(visitor) {
+        if (this.isProductAvailable()) {
+            return visitor.visit(this);
+        } else {
+            return null;
+        }
+    }
+
+    accept(visitor) {
+        visitor.visitOrder(this);
+    }
+}
+
+
+class TaxVisitor {
+    visit(order) {
+        const taxRate = 0.1;
+        const totalPrice = order.quantity * getProductPrice(order.productName);
+        const taxAmount = totalPrice * taxRate;
+        return totalPrice + taxAmount;
+    }
+
+    visitOrder(order) {
+        return this.visit(order);
+    }
+}
+
+function getProductPrice(productName) {
+    const product = products.find(product => product.name === productName);
+
+    return product ? product.price : 0;
+}
+
+
+const orderForm = document.getElementById('orderForm');
+const orderResult = document.getElementById('orderResult');
+
+orderForm.addEventListener('submit', function(event) {
+    event.preventDefault();
+    const productName = document.getElementById('productName').value;
+    const quantity = parseInt(document.getElementById('quantity').value);
+    const order = new Order(productName, quantity);
+    const taxVisitor = new TaxVisitor();
+    const totalPrice = order.calculateTotalPrice(taxVisitor);
+
+    if (totalPrice !== null) {
+        orderResult.innerHTML = `Total Price (including tax): $${totalPrice}`;
+    } else {
+        orderResult.innerHTML = `Product is out of stock.`;
+    }
+});
