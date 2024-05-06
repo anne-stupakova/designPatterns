@@ -65,6 +65,34 @@
         #language-switch:hover {
             background-color: #0056b3;
         }
+        input[type="text"],
+        input[type="number"],
+        button[type="submit"] {
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        button[type="submit"] {
+            background-color: #4CAF50;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #45a049;
+        }
+
+        #orderResult {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: cornflowerblue;
+            color: #fff;
+            border-radius: 5px;
+        }
     </style>
 </head>
 <body>
@@ -72,6 +100,15 @@
     <h1 id="welcomeMessage" data-translate="welcome">Welcome to the shop</h1>
     <div class="products" id="content"></div>
     <button data-translate="button" id="language-switch">Switch Language</button>
+    <h1>Order Form</h1>
+    <form id="orderForm">
+        <label for="productName">Product Name:</label>
+        <input type="text" id="productName" name="productName" required><br><br>
+        <label for="quantity">Quantity:</label>
+        <input type="number" id="quantity" name="quantity" min="1" required><br><br>
+        <button type="submit">Submit Order</button>
+    </form>
+    <div id="orderResult"></div>
 </div>
 </body>
 </html>
