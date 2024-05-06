@@ -1,3 +1,4 @@
+
 class LightNode {
     constructor() {
         this.children = [];
@@ -61,20 +62,50 @@ class Product {
     }
 }
 
-
 const products = [
     new Product('Lemon', 'A lemon is a yellow citrus fruit known for its sour taste and acidic juice, often used in cooking and beverages to add a tangy flavor.', 2),
     new Product('Apple', 'Apples are a popular fruit with a variety of flavors ranging from sweet to tart, and they come in different colors like red, green, and yellow.', 1),
     new Product('Kiwi', 'A kiwi is a small, fuzzy fruit with green flesh and tiny black seeds, known for its sweet and tangy flavor.', 3)
 ];
 
+class ProductIterator {
+    constructor(collection) {
+        this.collection = collection.sort((a, b) => a.price - b.price);
+        this.index = 0;
+    }
+
+    hasNext() {
+        return this.index < this.collection.length;
+    }
+
+    next() {
+        return this.collection[this.index++];
+    }
+}
+
+class ProductCollection {
+    constructor(products) {
+        this.products = products;
+    }
+
+    getIterator() {
+        return new ProductIterator(this.products);
+    }
+}
+
 const productsContainer = new LightElementNode('div', 'block', 'closing', ['products']);
-products.forEach(product => {
-    productsContainer.addChild(new LightTextNode(product.getProductHTML()));
-});
 
 const root = new LightElementNode('div', 'block', 'closing', ['container']);
 root.addChild(productsContainer);
+
+const productCollection = new ProductCollection(products);
+const iterator = productCollection.getIterator();
+
+while (iterator.hasNext()) {
+    const product = iterator.next();
+    const productNode = new LightTextNode(product.getProductHTML());
+    root.addChild(productNode);
+}
 
 const contentContainer = document.getElementById('content');
 
