@@ -47,17 +47,18 @@ class LightElementNode extends LightNode {
     }
 }
 class Product {
-    constructor(name, description, price) {
+    constructor(name, description, price, state) {
         this.name = name;
         this.description = description;
         this.price = price;
+        this.state = state;
     }
 
     getProductHTML() {
-        return `<div class="product" id="${this.name.toLowerCase()}">
-                    <h2>${this.name}</h2>
-                    <p>${this.description}</p>
-                    <p>Price: $<span class="price">${this.price}</span></p>
+        return `<div class="product">
+                    <h2 style="color: ${this.state instanceof OutOfStockState ? 'gray' : 'black'};">${this.name}</h2>
+                    ${this.state.displayDescription(this.description)}
+                    ${this.state.displayPrice(this.price)}
                 </div>`;
     }
 
@@ -72,10 +73,48 @@ class Product {
     }
 }
 
+class ProductState {
+    constructor(product) {
+        this.product = product;
+    }
+
+    clickLock() {}
+    displayPrice() {}
+    displayDescription() {}
+}
+
+class AvailableState extends ProductState {
+    clickLock() {
+        this.product.setState(new OutOfStockState(this.product));
+    }
+
+    displayPrice(price) {
+        return `<p>Price: $${price}</p>`;
+    }
+
+    displayDescription(description) {
+        return `<p>${description}</p>`;
+    }
+}
+
+class OutOfStockState extends ProductState {
+    clickLock() {
+        this.product.setState(new AvailableState(this.product));
+    }
+
+    displayPrice() {
+        return '<p>Out of Stock</p>';
+    }
+
+    displayDescription() {
+        return '';
+    }
+}
+
 const products = [
-    new Product('Lemon', 'A lemon is a yellow citrus fruit known for its sour taste and acidic juice, often used in cooking and beverages to add a tangy flavor.', 2),
-    new Product('Apple', 'Apples are a popular fruit with a variety of flavors ranging from sweet to tart, and they come in different colors like red, green, and yellow.', 1),
-    new Product('Kiwi', 'A kiwi is a small, fuzzy fruit with green flesh and tiny black seeds, known for its sweet and tangy flavor.', 3)
+    new Product('Lemon', 'A lemon is a yellow citrus fruit known for its sour taste and acidic juice, often used in cooking and beverages to add a tangy flavor.', 2, new AvailableState()),
+    new Product('Apple', 'Apples are a popular fruit with a variety of flavors ranging from sweet to tart, and they come in different colors like red, green, and yellow.', 1, new OutOfStockState()),
+    new Product('Kiwi', 'A kiwi is a small, fuzzy fruit with green flesh and tiny black seeds, known for its sweet and tangy flavor.', 3, new AvailableState())
 ];
 
 class ProductIterator {
