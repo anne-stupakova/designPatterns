@@ -61,7 +61,6 @@ class Product {
                     ${this.state.displayPrice(this.price)}
                 </div>`;
     }
-
     updatePriceHTML() {
         const productElement = document.getElementById(this.name.toLowerCase());
         if (productElement) {
@@ -70,6 +69,18 @@ class Product {
                 priceElement.textContent = this.price;
             }
         }
+    }
+    getProductHTMLTranslated(language) {
+        const translatedProductName = translations.productName[language][this.name];
+        const translatedProductDescription = translations.productDescription[language][this.name];
+        const translatedProductPrice = translations.productPrice[language][this.name];
+        const translatedOutOfStock = translations.outOfStock[language];
+
+        return `<div class="product" id="product-${this.name}">
+                    <h2>${translatedProductName}</h2>
+                    ${this.state instanceof OutOfStockState ? `<p>${translatedOutOfStock}</p>` : `<p>${translatedProductDescription}</p>`}
+                    ${this.state instanceof OutOfStockState ? '' : `<p>$${translatedProductPrice}</p>`}
+                </div>`;
     }
 }
 
@@ -261,3 +272,173 @@ const editor = app.editor;
 const changePriceCommand = new ChangePriceCommand(products[1], 3);
 
 app.executeCommand(changePriceCommand);
+
+const translations = {
+    welcome: {
+        english: 'Welcome to the shop',
+        ukrainian: 'Ласкаво просимо до магазину'
+    },
+    button: {
+        english: 'Switch Language',
+        ukrainian: 'Змінити мову'
+    },
+    outOfStock: {
+        english: 'Out of Stock',
+        ukrainian: 'Товар відсутній'
+    },
+    productName: {
+        english: {
+            Lemon: 'Lemon',
+            Apple: 'Apple',
+            Kiwi: 'Kiwi'
+        },
+        ukrainian: {
+            Lemon: 'Лимон',
+            Apple: 'Яблуко',
+            Kiwi: 'Ківі'
+        }
+    },
+    productDescription: {
+        english: {
+            Lemon: 'A lemon is a yellow citrus fruit known for its sour taste and acidic juice, often used in cooking and beverages to add a tangy flavor.',
+            Apple: 'Apples are a popular fruit with a variety of flavors ranging from sweet to tart, and they come in different colors like red, green, and yellow.',
+            Kiwi: 'A kiwi is a small, fuzzy fruit with green flesh and tiny black seeds, known for its sweet and tangy flavor.'
+        },
+        ukrainian: {
+            Lemon: 'Лимон - це жовтий цитрусовий фрукт, відомий своїм кислим смаком та кислотним соком, часто використовується при готуванні та в напоях, щоб додати пікантний смак.',
+            Apple: 'Яблука - популярний фрукт з різноманітними смаками від солодкого до кислого, і вони мають різні кольори, такі як червоний, зелений та жовтий.',
+            Kiwi: 'Ківі - це маленький, пухнастий фрукт з зеленою м\'якоттю та дрібними чорними насіннями, відомий своїм солодким та кислуватим смаком.'
+        }
+    },
+    productPrice: {
+        english: {
+            Lemon: 2,
+            Apple: 2,
+            Kiwi: 3
+        },
+        ukrainian: {
+            Lemon: 2,
+            Apple: 2,
+            Kiwi: 3
+        }
+    }
+};
+
+class LanguageSwitcher {
+    constructor(language) {
+        this.language = language;
+        this.selectedLanguage = language;
+    }
+
+    setLanguage(language) {
+        this.language = language;
+    }
+
+    switchLanguage() {
+        if (typeof translations !== 'undefined') {
+            const languageElements = document.querySelectorAll('[data-translate]');
+            languageElements.forEach(element => {
+                const key = element.getAttribute('data-translate');
+                if (translations[key] && translations[key][this.language]) {
+                    element.innerText = translations[key][this.language];
+                } else {
+                    console.error(`Translation not available for key: ${key}`);
+                }
+            });
+        } else {
+            console.error('Translations not defined.');
+        }
+    }
+
+    changeLanguageAndRefresh(productsContainer, root) {
+        const currentLanguage = this.language;
+        const newLanguage = this.getNextLanguage(currentLanguage);
+        this.setLanguage(newLanguage);
+        this.switchLanguage();
+        this.refreshProducts(productsContainer, root);
+    }
+
+    getNextLanguage(currentLanguage) {
+        throw new Error('getNextLanguage method must be implemented.');
+    }
+
+    refreshProducts(productsContainer, root) {
+        throw new Error('refreshProducts method must be implemented.');
+    }
+}
+
+class UkrainianLanguageSwitcher extends LanguageSwitcher {
+    constructor(language, productsContainer) {
+        super(language);
+        this.productsContainer = productsContainer;
+    }
+
+    getNextLanguage(currentLanguage) {
+        return currentLanguage === 'ukrainian' ? 'english' : 'ukrainian';
+    }
+
+    refreshProducts(productsContainer, root) {
+        this.selectedLanguage = this.language;
+
+        this.productsContainer.children = [];
+        products.forEach(product => {
+            this.productsContainer.addChild(new LightTextNode(product.getProductHTMLTranslated(this.selectedLanguage)));
+        });
+
+        contentContainer.innerHTML = root.outerHTML();
+    }
+}
+
+class EnglishLanguageSwitcher extends LanguageSwitcher {
+    constructor(language, productsContainer) {
+        super(language);
+        this.productsContainer = productsContainer;
+    }
+
+    getNextLanguage(currentLanguage) {
+        return currentLanguage === 'english' ? 'ukrainian' : 'english';
+    }
+
+    refreshProducts(productsContainer, root) {
+        this.selectedLanguage = this.language;
+
+        this.productsContainer.children = [];
+        products.forEach(product => {
+            this.productsContainer.addChild(new LightTextNode(product.getProductHTMLTranslated(this.selectedLanguage)));
+        });
+
+        contentContainer.innerHTML = root.outerHTML();
+    }
+}
+
+let selectedLanguage = 'english';
+
+document.addEventListener("DOMContentLoaded", () => {
+    const root = new LightElementNode('div', 'block', 'closing', ['container']);
+    const productsContainer = new LightElementNode('div', 'block', 'closing', ['products']);
+
+    const englishLanguageSwitcher = new EnglishLanguageSwitcher('english', productsContainer);
+    const ukrainianLanguageSwitcher = new UkrainianLanguageSwitcher('ukrainian', productsContainer);
+
+    const languageSwitchElement = document.getElementById('language-switch');
+
+    if (languageSwitchElement) {
+        languageSwitchElement.addEventListener('click', () => {
+            if (selectedLanguage === 'english') {
+                englishLanguageSwitcher.changeLanguageAndRefresh(productsContainer, root);
+            } else {
+                ukrainianLanguageSwitcher.changeLanguageAndRefresh(productsContainer, root);
+            }
+        });
+    } else {
+        console.error('Element with id "language-switch" not found.');
+    }
+
+    products.forEach(product => {
+        productsContainer.addChild(new LightTextNode(product.getProductHTMLTranslated(selectedLanguage)));
+    });
+
+    root.addChild(productsContainer);
+    contentContainer.innerHTML = root.outerHTML();
+});
+
