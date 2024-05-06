@@ -54,11 +54,21 @@ class Product {
     }
 
     getProductHTML() {
-        return `<div class="product">
+        return `<div class="product" id="${this.name.toLowerCase()}">
                     <h2>${this.name}</h2>
                     <p>${this.description}</p>
-                    <p>Price: $${this.price}</p>
+                    <p>Price: $<span class="price">${this.price}</span></p>
                 </div>`;
+    }
+
+    updatePriceHTML() {
+        const productElement = document.getElementById(this.name.toLowerCase());
+        if (productElement) {
+            const priceElement = productElement.querySelector('.price');
+            if (priceElement) {
+                priceElement.textContent = this.price;
+            }
+        }
     }
 }
 
@@ -110,3 +120,105 @@ while (iterator.hasNext()) {
 const contentContainer = document.getElementById('content');
 
 contentContainer.innerHTML = root.outerHTML();
+
+class Editor {
+    constructor() {
+        this.text = root.outerHTML();
+    }
+
+    setText(text) {
+        this.text = text;
+    }
+
+    getText() {
+        return this.text;
+    }
+}
+
+class Command {
+    constructor() {
+        this.product = null;
+        this.newPrice = null;
+        this.oldPrice = null;
+    }
+
+    execute() {
+        throw new Error('This method must be implemented in subclasses');
+    }
+
+    undo() {
+        throw new Error('This method must be implemented in subclasses');
+    }
+}
+class ChangePriceCommand extends Command {
+    constructor(product, newPrice) {
+        super();
+        this.product = product;
+        this.newPrice = newPrice;
+        this.oldPrice = null;
+    }
+
+    execute() {
+        if (!this.product) {
+            console.error('Product is not defined');
+            return false;
+        }
+        this.oldPrice = this.product.price;
+        this.product.price = this.newPrice;
+        console.log(`Price changed for ${this.product.name} from $${this.oldPrice} to $${this.newPrice}`);
+        return true;
+    }
+
+    undo() {
+        if (this.product && this.oldPrice !== null) {
+            this.product.price = this.oldPrice;
+            console.log(`Undo: Price reverted for ${this.product.name} from $${this.newPrice} to $${this.oldPrice}`);
+        } else {
+            console.error('Undo failed: Product or old price is not defined');
+        }
+    }
+}
+
+class Application {
+    constructor() {
+        this.editor = new Editor();
+        this.history = [];
+    }
+
+    executeCommand(command) {
+        if (command.execute()) {
+            this.history.push(command);
+            this.editor.setText(root.outerHTML());
+            renderHTML(root);
+        } else {
+            console.error('Command execution failed');
+        }
+    }
+
+    undo() {
+        const command = this.history.pop();
+        if (command) {
+            command.undo();
+            this.editor.setText(root.outerHTML());
+            renderHTML(root);
+        } else {
+            console.error('Undo failed: No command in history');
+        }
+    }
+}
+
+
+function renderHTML(rootNode) {
+    const contentContainer = document.getElementById('content');
+    contentContainer.innerHTML = rootNode.outerHTML();
+
+    products.forEach(product => {
+        product.updatePriceHTML();
+    });
+}
+
+const app = new Application();
+const editor = app.editor;
+const changePriceCommand = new ChangePriceCommand(products[1], 3);
+
+app.executeCommand(changePriceCommand);
